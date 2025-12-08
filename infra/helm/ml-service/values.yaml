@@ -1,0 +1,28 @@
+image:
+  repository: "<account>.dkr.ecr.<region>.amazonaws.com/tcc-auto-fix/ml"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+env:
+  - name: MODEL_S3_BUCKET
+    value: "tcc-auto-fix-dev-ml-artifacts"
+  - name: MONGO_URL
+    value: "mongodb://mongo:27017/ml?authSource=admin"
+  - name: ML_DB_PASSWORD_SSM_PATH
+    value: "/tcc-auto-fix/dev/ml_db_password"
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1
+    memory: 1Gi
+
+replicaCount: 1
+
+

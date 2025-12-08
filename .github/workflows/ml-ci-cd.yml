@@ -1,0 +1,72 @@
+name: ml-ci-cd
+
+on:
+  push:
+    paths:
+      - "ml/**"
+      - "infra/helm/ml-service/**"
+  pull_request:
+    paths:
+      - "ml/**"
+      - "infra/helm/ml-service/**"
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        working-directory: ml/service
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn pytest
+          pip install httpx[http2]
+
+      - name: Unit tests
+        working-directory: ml
+        run: pytest
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          ECR_REPO: ${{ secrets.ECR_ML_REPO }}
+        run: |
+          docker build -t $ECR_REPO:latest ml/service
+          docker push $ECR_REPO:latest
+
+      - name: Fetch DB password from SSM
+        run: |
+          ML_DB_PASS=$(aws ssm get-parameter --name "/tcc-auto-fix/${{ secrets.ENV }}/ml_db_password" --with-decryption --query Parameter.Value --output text)
+          echo "ML_DB_PASS=${ML_DB_PASS}" >> $GITHUB_ENV
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Helm upgrade
+        run: |
+          helm upgrade --install ml infra/helm/ml-service \
+            --set image.repository=${{ secrets.ECR_ML_REPO }} \
+            --set image.tag=latest \
+            --set env[1].value="mongodb://mongo:27017/ml?authSource=admin" \
+            --set env[2].value="/tcc-auto-fix/${{ secrets.ENV }}/ml_db_password"
+
+

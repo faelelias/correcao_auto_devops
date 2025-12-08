@@ -1,0 +1,73 @@
+name: app-ci-cd
+
+on:
+  push:
+    paths:
+      - "app/**"
+      - "infra/helm/app-service/**"
+  pull_request:
+    paths:
+      - "app/**"
+      - "infra/helm/app-service/**"
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        working-directory: app
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn httpx pytest
+          pip install httpx[http2]
+
+      - name: Unit tests
+        working-directory: app
+        run: pytest
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          ECR_REPO: ${{ secrets.ECR_APP_REPO }}
+        run: |
+          docker build -t $ECR_REPO:latest app
+          docker push $ECR_REPO:latest
+
+      - name: Fetch DB password from SSM
+        id: ssm
+        run: |
+          APP_DB_PASS=$(aws ssm get-parameter --name "/tcc-auto-fix/${{ secrets.ENV }}/app_db_password" --with-decryption --query Parameter.Value --output text)
+          echo "APP_DB_PASS=${APP_DB_PASS}" >> $GITHUB_ENV
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Helm upgrade
+        run: |
+          helm upgrade --install app infra/helm/app-service \
+            --set image.repository=${{ secrets.ECR_APP_REPO }} \
+            --set image.tag=latest \
+            --set env[0].value="mongodb://mongo:27017/app?authSource=admin" \
+            --set env[2].value="/tcc-auto-fix/${{ secrets.ENV }}/app_db_password"
+
+

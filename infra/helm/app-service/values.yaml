@@ -1,0 +1,35 @@
+image:
+  repository: "<account>.dkr.ecr.<region>.amazonaws.com/tcc-auto-fix/app"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+env:
+  - name: MONGO_URL
+    value: "mongodb://mongo:27017/app?authSource=admin"
+  - name: ML_SERVICE_URL
+    value: "http://ml-service:8000"
+  - name: APP_DB_PASSWORD_SSM_PATH
+    value: "/tcc-auto-fix/dev/app_db_password"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podAnnotations:
+  # OpenTelemetry annotations example
+  # instrumentation.opentelemetry.io/inject-sdk: "true"
+  # instrumentation.opentelemetry.io/inject-propagators: "b3"
+  # instrumentation.opentelemetry.io/inject-exporter: "otlp"
+  # instrumentation.opentelemetry.io/otel-service-name: "app-service"
+
+replicaCount: 2
+
+

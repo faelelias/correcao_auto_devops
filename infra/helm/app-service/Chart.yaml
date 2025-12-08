@@ -1,0 +1,8 @@
+apiVersion: v2
+name: app-service
+description: API principal (recebe erros e chama ml-service)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+
