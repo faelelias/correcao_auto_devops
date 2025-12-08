@@ -42,3 +42,8 @@ build/
 kubeconfig
 *.kubeconfig
 
+# Pessoal
+
+DESCRICAO_PROJETO.md
+INSTRUCOES_DIAGRAMA.md
+INSTRUCOES_GIT.md

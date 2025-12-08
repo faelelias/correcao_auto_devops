@@ -1,0 +1,72 @@
+graph TB
+    subgraph "DESENVOLVIMENTO & CI/CD"
+        GitHub[GitHub Repository]
+        Actions[GitHub Actions]
+        Terraform[Terraform IaC]
+        Helm[Helm Charts]
+        GitHub -->|Push| Actions
+        Actions -->|Build & Push| ECR
+        Terraform -->|Deploy Infra| AWS
+        Helm -->|Deploy Apps| EKS
+    end
+
+    subgraph "INFRAESTRUTURA AWS"
+        VPC[VPC Virtual Private Cloud]
+        EKS[EKS Cluster Kubernetes]
+        ECR[ECR Container Registry]
+        S3[S3 Logs & ML Artifacts]
+        CloudWatch[CloudWatch Logs]
+        SSM[SSM Parameter Store]
+    end
+
+    subgraph "SERVIÇOS NO EKS"
+        AppService[app-service<br/>FastAPI<br/>POST /errors<br/>POST /feedback]
+        MLService[ml-service<br/>FastAPI<br/>POST /predict<br/>Inference]
+        ObsStack[Observability Stack<br/>Prometheus<br/>Grafana<br/>OTel Collector]
+        MongoDB[(MongoDB<br/>Database<br/>Errors & Feedback)]
+    end
+
+    subgraph "PIPELINE DE TREINAMENTO"
+        Training[ml-training Pipeline<br/>Periodic]
+        Model[Model Training<br/>LightGBM/Sklearn]
+        Training --> Model
+    end
+
+    %% Fluxo principal de erro
+    AppService -->|1. Erro recebido| AppService
+    AppService -->|2. Consulta ML| MLService
+    MLService -->|3. Sugestão| AppService
+    AppService -->|4. Salvar| MongoDB
+    AppService -->|Logs| S3
+    AppService -->|Logs| CloudWatch
+
+    %% Fluxo de feedback
+    MongoDB -->|5. Feedback| Training
+    Training -->|6. Treinar| Model
+    Model -->|7. Atualizar Modelo| MLService
+
+    %% Observabilidade
+    AppService -->|Métricas| ObsStack
+    MLService -->|Métricas| ObsStack
+    ObsStack -->|Logs| CloudWatch
+
+    %% CI/CD
+    Actions -->|Build & Push| ECR
+    ECR -->|Deploy| EKS
+
+    style GitHub fill:#24292e,stroke:#000,color:#fff
+    style Actions fill:#24292e,stroke:#000,color:#fff
+    style Terraform fill:#FF9900,stroke:#000,color:#fff
+    style Helm fill:#FF6B6B,stroke:#000,color:#fff
+    style EKS fill:#FF6B6B,stroke:#000,color:#fff
+    style ECR fill:#FF9900,stroke:#000,color:#fff
+    style S3 fill:#4ECDC4,stroke:#000,color:#fff
+    style CloudWatch fill:#FFA500,stroke:#000,color:#fff
+    style SSM fill:#FF9900,stroke:#000,color:#fff
+    style AppService fill:#4A90E2,stroke:#000,color:#fff
+    style MLService fill:#9B59B6,stroke:#000,color:#fff
+    style ObsStack fill:#E6522C,stroke:#000,color:#fff
+    style MongoDB fill:#47A248,stroke:#000,color:#fff
+    style Training fill:#9B59B6,stroke:#000,color:#fff
+    style Model fill:#9B59B6,stroke:#000,color:#fff
+

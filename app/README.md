@@ -2,7 +2,7 @@
 
 API principal responsável por receber eventos de erro, consultar o `ml-service` para classificação/sugestão de correção e registrar feedback no MongoDB.
 
-Endpoints sugeridos:
+Endpoints :
 - `POST /errors`: recebe erro, envia para ML, registra em MongoDB.
 - `POST /feedback`: recebe feedback de correções aplicadas.
 
