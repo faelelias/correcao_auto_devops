@@ -14,9 +14,4 @@ Como usar:
 4) `terraform plan`
 5) `terraform apply`
 
-Customize:
-- Ajuste tipos de instância, escalabilidade e políticas de IAM conforme necessário.
-- Adicione buckets adicionais ou integrações (ex: X-Ray, Secrets Manager).
-- `enable_observability` liga/desliga a instalação do `kube-prometheus-stack`.
-
 
