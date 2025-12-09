@@ -1,0 +1,30 @@
+# Exemplo de arquivo terraform.tfvars
+# Copie este arquivo para terraform.tfvars e ajuste os valores
+
+# Ambiente
+environment = "dev"
+aws_region  = "us-east-1"
+
+# Bucket S3 de origem (obrigatório)
+source_bucket_name = "meu-bucket-origem"
+source_bucket_arn  = "arn:aws:s3:::meu-bucket-origem"
+
+# Prefixo opcional para filtrar arquivos a deletar
+# Deixe vazio para deletar todos os arquivos do bucket
+delete_prefix = ""
+
+# Configuração da Lambda
+lambda_timeout     = 300
+lambda_memory_size = 256
+log_retention_days = 14
+
+# Opção 1: Usar Data Sync Task existente
+create_datasync_task = false
+datasync_task_arn    = "arn:aws:datasync:us-east-1:123456789012:task/task-1234567890abcdef0"
+
+# Opção 2: Criar Data Sync Task automaticamente
+# create_datasync_task    = true
+# datasync_role_arn       = "arn:aws:iam::123456789012:role/datasync-role"
+# destination_bucket_arn  = "arn:aws:s3:::meu-bucket-destino"
+# source_subdirectory     = ""
+# destination_subdirectory = ""

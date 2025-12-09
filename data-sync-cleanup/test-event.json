@@ -1,0 +1,19 @@
+{
+  "version": "0",
+  "id": "example-event-id",
+  "detail-type": "DataSync Task Execution State Change",
+  "source": "aws.datasync",
+  "account": "123456789012",
+  "time": "2024-01-15T10:30:00Z",
+  "region": "us-east-1",
+  "resources": [
+    "arn:aws:datasync:us-east-1:123456789012:task/task-1234567890abcdef0"
+  ],
+  "detail": {
+    "status": "SUCCESS",
+    "taskArn": "arn:aws:datasync:us-east-1:123456789012:task/task-1234567890abcdef0",
+    "executionArn": "arn:aws:datasync:us-east-1:123456789012:execution/exec-1234567890abcdef0",
+    "startTime": "2024-01-15T10:25:00Z",
+    "endTime": "2024-01-15T10:30:00Z"
+  }
+}
